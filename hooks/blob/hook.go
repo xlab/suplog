@@ -78,13 +78,14 @@ func checkHookOptions(opt *HookOptions) *HookOptions {
 }
 
 type RootLogger interface {
-	Warning(format string, args ...interface{})
-	Error(format string, args ...interface{})
-	Debug(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Debugf(format string, args ...interface{})
+	Printf(format string, args ...interface{})
 }
 
 // NewHook initializes a new suplog.Hook using provided params and options.
-// Provide a root logger to root any errors hapenning during plugin init.
+// Provide a root logger to print any errors occuring during the plugin init.
 func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	h := &hook{
 		logger: logger,
@@ -98,10 +99,10 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 		h.opt.BlobStoreRegion,
 		h.opt.BlobStoreBucket,
 	); err != nil {
-		logger.Error("failed to init S3 session: %+v", err)
+		logger.Errorf("failed to init S3 session: %+v", err)
 		return h
 	} else if err = s3Remote.CheckAccess(h.opt.Env); err != nil {
-		logger.Error("failed to verify S3 remote access: %+v", err)
+		logger.Errorf("failed to verify S3 remote access: %+v", err)
 		return h
 	} else {
 		h.s3Remote = s3Remote
@@ -135,12 +136,12 @@ func (h *hook) Fire(e *logrus.Entry) error {
 	}
 
 	if h.s3Remote == nil {
-		h.logger.Warning("blob provided but S3 remote is disabled")
+		h.logger.Warningf("blob provided but S3 remote is disabled")
 		delete(e.Data, "blob")
 
 		return nil
 	} else if enabled := h.opt.BlobEnabledEnv[h.opt.Env]; !enabled {
-		h.logger.Debug("blob provided but uploading is disabled in %s", h.opt.Env)
+		h.logger.Debugf("blob provided but uploading is disabled in %s", h.opt.Env)
 		delete(e.Data, "blob")
 		return nil
 	}
@@ -175,7 +176,7 @@ func (h *hook) blobUpload(blobID string, payload []byte) {
 	_, err := h.s3Remote.PutObject(objectKey, bytes.NewReader(payload), nil)
 
 	if err != nil {
-		h.logger.Error(
+		h.logger.Errorf(
 			"failed to upload blob to S3 remote server: key %s in %s: %+v",
 			objectKey,
 			h.opt.BlobStoreBucket,

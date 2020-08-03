@@ -89,14 +89,19 @@ func (l *suplogger) initOnce() {
 // addDefaultHooks initializes default hooks and additional hooks
 // based on the environment setup.
 func (l *suplogger) addDefaultHooks() {
-	l.logger.AddHook(debugHook.NewHook(l, nil))
+	// new logger with same out and formatter, but no hooks.
+	// used to avoid hooking a hooka-roo from hooks,
+	// that hits a mutex in the same logrus entry.
+	hookLogger := NewLogger(l.logger.Out, l.logger.Formatter)
+
+	l.logger.AddHook(debugHook.NewHook(hookLogger, nil))
 
 	if isTrue(os.Getenv("LOG_BLOB_ENABLED")) {
-		l.logger.AddHook(blobHook.NewHook(l, nil))
+		l.logger.AddHook(blobHook.NewHook(hookLogger, nil))
 	}
 
 	if isTrue(os.Getenv("LOG_BUGSNAG_ENABLED")) {
-		l.logger.AddHook(bugsnagHook.NewHook(l, nil))
+		l.logger.AddHook(bugsnagHook.NewHook(hookLogger, nil))
 	}
 }
 

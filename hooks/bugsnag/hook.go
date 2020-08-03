@@ -70,16 +70,16 @@ func checkHookOptions(opt *HookOptions) *HookOptions {
 }
 
 type RootLogger interface {
-	Warning(format string, args ...interface{})
-	Error(format string, args ...interface{})
-	Debug(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Debugf(format string, args ...interface{})
 	Printf(format string, args ...interface{})
 }
 
 const stackFrameOffset = 6
 
 // NewHook initializes a new logrus.Hook using provided params and options.
-// Provide a root logger to root any errors hapenning during plugin init.
+// Provide a root logger to print any errors occuring during the plugin init.
 func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	opt = checkHookOptions(opt)
 
