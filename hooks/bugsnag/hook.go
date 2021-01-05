@@ -3,6 +3,7 @@ package bugsnag
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	bugsnag "github.com/bugsnag/bugsnag-go"
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,7 @@ type HookOptions struct {
 	BugsnagAPIKey     string
 	BugsnagEnabledEnv []string
 	BugsnagPackages   []string
+	BugsnagCatchAll   bool
 }
 
 func checkHookOptions(opt *HookOptions) *HookOptions {
@@ -49,6 +51,10 @@ func checkHookOptions(opt *HookOptions) *HookOptions {
 
 	if len(opt.BugsnagAPIKey) == 0 {
 		opt.BugsnagAPIKey = os.Getenv("LOG_BUGSNAG_KEY")
+	}
+
+	if !opt.BugsnagCatchAll {
+		opt.BugsnagCatchAll = toBool(os.Getenv("LOG_BUGSNAG_CATCH_ALL"))
 	}
 
 	if len(opt.BugsnagEnabledEnv) == 0 {
@@ -83,6 +89,11 @@ const stackFrameOffset = 6
 func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	opt = checkHookOptions(opt)
 
+	var panicHandler func() = nil
+	if !opt.BugsnagCatchAll {
+		panicHandler = func() {}
+	}
+
 	return &hook{
 		opt:    opt,
 		logger: logger,
@@ -93,7 +104,7 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 			ProjectPackages:     opt.BugsnagPackages,
 			AppVersion:          opt.AppVersion,
 			NotifyReleaseStages: opt.BugsnagEnabledEnv,
-			PanicHandler:        func() {},
+			PanicHandler:        panicHandler,
 			Logger:              logger,
 		}),
 	}
@@ -203,5 +214,14 @@ func fieldsToMetaData(fields logrus.Fields) bugsnag.MetaData {
 
 	return bugsnag.MetaData{
 		"Fields": fieldsMap,
+	}
+}
+
+func toBool(s string) bool {
+	switch strings.ToLower(s) {
+	case "true", "1", "t", "yes":
+		return true
+	default:
+		return false
 	}
 }
