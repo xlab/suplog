@@ -32,11 +32,13 @@ func NewLogger(wr io.Writer, formatter Formatter, hooks ...Hook) Logger {
 			ExitFunc:  closer.Exit,
 		},
 
-		writer:   wr,
-		mux:      new(sync.Mutex),
-		stack:    stackcache.New(1, "github.com/xlab/suplog"),
-		initDone: true,
+		writer:           wr,
+		mux:              new(sync.Mutex),
+		stackTraceOffset: 0,
+		initDone:         true,
 	}
+
+	log.reloadStackTraceCache()
 	log.entry = log.logger.WithContext(context.Background())
 
 	for _, h := range hooks {
@@ -50,9 +52,10 @@ type suplogger struct {
 	logger *logrus.Logger
 	entry  *logrus.Entry
 
-	mux    *sync.Mutex
-	writer io.Writer
-	stack  stackcache.StackCache
+	mux              *sync.Mutex
+	writer           io.Writer
+	stack            stackcache.StackCache
+	stackTraceOffset int
 
 	init     sync.Once
 	initDone bool
@@ -79,11 +82,17 @@ func (l *suplogger) initOnce() {
 		}
 
 		l.entry = l.logger.WithContext(context.Background())
-		l.stack = stackcache.New(1, "github.com/xlab/suplog")
+		l.reloadStackTraceCache()
 		l.addDefaultHooks()
 		l.mux = new(sync.Mutex)
 		l.initDone = true
 	})
+}
+
+// reloadStackTraceCache allows to reload the stack trace reporter with new offset,
+// allowing to wrap suplogger into other funcs.
+func (l *suplogger) reloadStackTraceCache() {
+	l.stack = stackcache.New(1+l.stackTraceOffset, "github.com/xlab/suplog")
 }
 
 // addDefaultHooks initializes default hooks and additional hooks
@@ -331,6 +340,13 @@ func (l *suplogger) IsLevelEnabled(level Level) bool {
 func (l *suplogger) SetFormatter(formatter Formatter) {
 	l.initOnce()
 	l.logger.SetFormatter(formatter)
+}
+
+// SetFormatter sets the logger formatter.
+func (l *suplogger) SetStackTraceOffset(offset int) {
+	l.initOnce()
+	l.stackTraceOffset = offset
+	l.reloadStackTraceCache()
 }
 
 // SetOutput sets the logger suplog.

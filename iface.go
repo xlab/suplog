@@ -64,6 +64,7 @@ type LoggerConfigurator interface {
 	IsLevelEnabled(level Level) bool
 	AddHook(hook Hook)
 	ReplaceHooks(hooks LevelHooks) LevelHooks
+	SetStackTraceOffset(offset int)
 	CallerName() string
 }
 
