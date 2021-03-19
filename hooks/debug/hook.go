@@ -20,6 +20,9 @@ type HookOptions struct {
 	// Untrimmed: /Users/xlab/Documents/dev/go/src/github.com/xlab/suplog/default_test.go
 	// Trimmed (3): xlab/suplog/default_test.go
 	PathSegmentsLimit int
+	// StackTraceOffset allows to wrap logger into greater stack depth and still
+	// get reports on accurate positions.
+	StackTraceOffset int
 }
 
 func checkHookOptions(opt *HookOptions) *HookOptions {
@@ -52,6 +55,8 @@ type RootLogger interface {
 	Printf(format string, args ...interface{})
 }
 
+const defaultStackFrameOffset = 6
+
 // NewHook initializes a new logrus.Hook using provided params and options.
 // Provide a root logger to print any errors occuring during the plugin init.
 func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
@@ -60,7 +65,7 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	return &hook{
 		opt:    opt,
 		logger: logger,
-		stack:  stackcache.New(6, "github.com/xlab/suplog"),
+		stack:  stackcache.New(defaultStackFrameOffset+opt.StackTraceOffset, "github.com/xlab/suplog"),
 	}
 }
 

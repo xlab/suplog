@@ -15,6 +15,9 @@ import (
 type HookOptions struct {
 	// Levels enables this hook for all listed levels.
 	Levels []logrus.Level
+	// StackTraceOffset allows to wrap logger into greater stack depth and still
+	// get reports on accurate positions.
+	StackTraceOffset int
 
 	Env               string
 	AppVersion        string
@@ -82,7 +85,7 @@ type RootLogger interface {
 	Printf(format string, args ...interface{})
 }
 
-const stackFrameOffset = 6
+const defaultStackFrameOffset = 6
 
 // NewHook initializes a new logrus.Hook using provided params and options.
 // Provide a root logger to print any errors occuring during the plugin init.
@@ -97,7 +100,7 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	return &hook{
 		opt:    opt,
 		logger: logger,
-		stack:  stackcache.New(stackFrameOffset, "github.com/xlab/suplog"),
+		stack:  stackcache.New(defaultStackFrameOffset+opt.StackTraceOffset, "github.com/xlab/suplog"),
 		notifier: bugsnag.New(bugsnag.Configuration{
 			APIKey:              opt.BugsnagAPIKey,
 			ReleaseStage:        opt.Env,
