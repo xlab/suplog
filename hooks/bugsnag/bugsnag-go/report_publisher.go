@@ -9,7 +9,12 @@ type reportPublisher interface {
 type defaultReportPublisher struct{}
 
 func (*defaultReportPublisher) publishReport(p *payload) error {
-	p.logf("notifying bugsnag: %s", p.Message)
+	if len(p.Stacktrace) > 0 {
+		p.logf("notifying bugsnag %s: %s (src: %s:%d)", p.Severity.String, p.Message, p.Stacktrace[0].File, p.Stacktrace[0].LineNumber)
+	} else {
+		p.logf("notifying bugsnag %s: %s", p.Severity.String, p.Message)
+	}
+
 	if !p.notifyInReleaseStage() {
 		return fmt.Errorf("not notifying in %s", p.ReleaseStage)
 	}

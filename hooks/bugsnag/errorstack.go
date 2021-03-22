@@ -1,11 +1,14 @@
 package bugsnag
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/bugsnag/bugsnag-go/errors"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/xlab/suplog/stackcache"
 )
@@ -66,4 +69,62 @@ func limitPath(path string, n int) string {
 	}
 
 	return filepath.Join(pathParts...)
+}
+
+type pkgErrorsStackTracer interface {
+	StackTrace() pkgerrors.StackTrace
+}
+
+func newErrorWithPkgErrorsStackTrace(err error, stackTrace pkgerrors.StackTrace) (ErrorWithStackFrames, error) {
+	if err == nil {
+		return nil, nil
+	}
+
+	e := &errorWithStack{
+		orig:   err,
+		frames: make([]errors.StackFrame, len(stackTrace)),
+	}
+
+	for i, frame := range stackTrace {
+		var (
+			fnName         string
+			fileName       string
+			fileLineNumber int
+		)
+
+		frameText, parseErr := frame.MarshalText()
+		if parseErr != nil {
+			return nil, parseErr
+		}
+
+		parts := strings.Split(string(frameText), " ")
+		if len(parts) != 2 {
+			parseErr = fmt.Errorf("frame text partial read: not enough parts")
+			return nil, parseErr
+		}
+		fnName = parts[0]
+
+		lineNumIdx := strings.LastIndexByte(parts[1], ':')
+		if lineNumIdx < 0 || lineNumIdx+1 >= len(parts[1]) {
+			parseErr = fmt.Errorf("frame text partial read: no file line delim in %s", parts[1])
+			return nil, parseErr
+		}
+
+		fileLineNumber, parseErr = strconv.Atoi(parts[1][lineNumIdx+1:])
+		if parseErr != nil {
+			parseErr = fmt.Errorf("failed to parse line num %s", parseErr)
+			return nil, parseErr
+		}
+		fileName = parts[1][:lineNumIdx]
+
+		e.frames[i] = errors.StackFrame{
+			File:           limitPath(fileName, 3),
+			LineNumber:     fileLineNumber,
+			Name:           fnName,
+			Package:        stackcache.GetPackageName(fnName),
+			ProgramCounter: uintptr(frame),
+		}
+	}
+
+	return e, nil
 }

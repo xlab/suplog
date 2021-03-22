@@ -55,7 +55,7 @@ type RootLogger interface {
 	Printf(format string, args ...interface{})
 }
 
-const defaultStackFrameOffset = 6
+const defaultStackSearchOffset = 6
 
 // NewHook initializes a new logrus.Hook using provided params and options.
 // Provide a root logger to print any errors occuring during the plugin init.
@@ -65,7 +65,7 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	return &hook{
 		opt:    opt,
 		logger: logger,
-		stack:  stackcache.New(defaultStackFrameOffset+opt.StackTraceOffset, "github.com/xlab/suplog"),
+		stack:  stackcache.New(defaultStackSearchOffset, opt.StackTraceOffset, "github.com/xlab/suplog"),
 	}
 }
 

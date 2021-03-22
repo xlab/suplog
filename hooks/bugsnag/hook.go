@@ -85,7 +85,7 @@ type RootLogger interface {
 	Printf(format string, args ...interface{})
 }
 
-const defaultStackFrameOffset = 6
+const defaultStackSearchOffset = 6
 
 // NewHook initializes a new logrus.Hook using provided params and options.
 // Provide a root logger to print any errors occuring during the plugin init.
@@ -100,7 +100,7 @@ func NewHook(logger RootLogger, opt *HookOptions) logrus.Hook {
 	return &hook{
 		opt:    opt,
 		logger: logger,
-		stack:  stackcache.New(defaultStackFrameOffset+opt.StackTraceOffset, "github.com/xlab/suplog"),
+		stack:  stackcache.New(defaultStackSearchOffset, opt.StackTraceOffset, "github.com/xlab/suplog"),
 		notifier: bugsnag.New(bugsnag.Configuration{
 			APIKey:              opt.BugsnagAPIKey,
 			ReleaseStage:        opt.Env,
@@ -136,6 +136,19 @@ func (h *hook) Fire(e *logrus.Entry) error {
 		if withStack, ok := withErr.(ErrorWithStackFrames); ok {
 			// use this error to report, with its original stack
 			err = withStack
+			errContext.String = e.Message
+		} else if stackTracer, ok := withErr.(pkgErrorsStackTracer); ok {
+			// the error is pkg/errors wrapped error, try to parse it
+			var parsingErr error
+
+			stackTrace := stackTracer.StackTrace()
+			err, parsingErr = newErrorWithPkgErrorsStackTrace(withErr, stackTrace)
+			if parsingErr != nil {
+				// no stack with error (parsing failure), wrap it
+				stackFrames := h.stack.GetStackFrames()
+				err = newErrorWithStackFrames(withErr, stackFrames)
+			}
+
 			errContext.String = e.Message
 		} else {
 			// no stack with error, wrap it

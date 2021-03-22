@@ -89,12 +89,12 @@ func (l *suplogger) initOnce() {
 	})
 }
 
-const defaultStackFrameOffset = 1
+const defaultStackSearchOffset = 1
 
 // reloadStackTraceCache allows to reload the stack trace reporter with new offset,
 // allowing to wrap suplogger into other funcs.
 func (l *suplogger) reloadStackTraceCache() {
-	l.stack = stackcache.New(defaultStackFrameOffset+l.stackTraceOffset, "github.com/xlab/suplog")
+	l.stack = stackcache.New(defaultStackSearchOffset, l.stackTraceOffset, "github.com/xlab/suplog")
 }
 
 // addDefaultHooks initializes default hooks and additional hooks

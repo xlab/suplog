@@ -13,11 +13,13 @@ type StackCache interface {
 
 // New creates a new stack cache for effectively traversing runtime frame stack.
 // The traverser will start at pcOffset and move until not exited from internal
-// packages of the output library.
-func New(pcOffset int, breakpointPackage string) StackCache {
+// packages of the output library. pcSkip frames will be cut to avoid reporting
+// the middleware layers.
+func New(pcSearchOffset, pcSkip int, breakpointPackage string) StackCache {
 	return &stackCache{
-		minimumCallerDepth: pcOffset,
-		maximumCallerDepth: 25,
+		minimumCallerDepth: pcSearchOffset,
+		maximumCallerDepth: 50,
+		callerSkipFrames:   pcSkip,
 		breakpointPackage:  breakpointPackage,
 	}
 }
@@ -31,6 +33,7 @@ type stackCache struct {
 	offsetIsSet        bool
 	minimumCallerDepth int
 	maximumCallerDepth int
+	callerSkipFrames   int
 }
 
 // pkgNameTesting is the package of testing.tRunner, in case if
@@ -38,11 +41,12 @@ type stackCache struct {
 const pkgNameTesting = "testing"
 
 // GetCaller retrieves the name of the first function from a non-internal package.
-// That would be our caller.
+// That would be our caller. Actually, may skip up to callerSkipFrames.
 func (c *stackCache) GetCaller() runtime.Frame {
 	pcs := make([]uintptr, c.maximumCallerDepth)
 	depth := runtime.Callers(c.minimumCallerDepth, pcs)
 	frames := runtime.CallersFrames(pcs[:depth])
+	skip := c.callerSkipFrames
 
 	var (
 		offset      int
@@ -63,6 +67,12 @@ func (c *stackCache) GetCaller() runtime.Frame {
 			if pkg == pkgNameTesting {
 				break
 			}
+
+			if skip != 0 {
+				skip--
+				continue
+			}
+
 			latestFrame = f
 			break
 		}
@@ -109,6 +119,10 @@ func (c *stackCache) GetStackFrames() []runtime.Frame {
 		latestFrame = f
 		latestPkg = pkg
 		offset++
+	}
+
+	if c.callerSkipFrames > 0 && len(usefulStackFrames) >= c.callerSkipFrames {
+		usefulStackFrames = usefulStackFrames[c.callerSkipFrames:]
 	}
 
 	return usefulStackFrames
