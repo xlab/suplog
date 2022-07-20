@@ -3,14 +3,13 @@ module github.com/xlab/suplog
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.25.16
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/oklog/ulid v1.3.1
+	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/bugsnag/panicwrap v1.3.4 // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2
-	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
-	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4 // indirect
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	github.com/xlab/suplog/hooks/blob v0.0.0-20220720111129-da4fb2555fa2
+	github.com/xlab/suplog/hooks/bugsnag v0.0.0-20220720111129-da4fb2555fa2
 )
