@@ -1,9 +1,10 @@
-module github.com/xlab/suplog
+module github.com/xlab/suplog/hooks/blob
 
 go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.25.16
+	github.com/bugsnag/bugsnag-go v1.5.3
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/errors v0.9.1
