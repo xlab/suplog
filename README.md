@@ -143,7 +143,6 @@ The hook can be enabled in default suplogger by setting OS ENV variables:
 * APP_ENV (e.g. `test`, `staging` or `prod`)
 * APP_VERSION
 * LOG_BUGSNAG_KEY
-* **LOG_BUGSNAG_ENABLED** — this option enables bugsnag in default suplogger for existing codebase.
 
 ### Blob Uploads
 
@@ -180,7 +179,6 @@ The following OS ENV variables are mapped:
 * LOG_BLOB_STORE_ENDPOINT
 * LOG_BLOB_STORE_REGION
 * LOG_BLOB_STORE_BUCKET
-* **LOG_BLOB_ENABLED** — this option enables blob in default suplogger for existing codebase.
 
 How to use:
 

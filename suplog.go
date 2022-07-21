@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	blobHook "github.com/xlab/suplog/hooks/blob"
-	bugsnagHook "github.com/xlab/suplog/hooks/bugsnag"
 	debugHook "github.com/xlab/suplog/hooks/debug"
 
 	"github.com/sirupsen/logrus"
@@ -107,13 +105,16 @@ func (l *suplogger) addDefaultHooks() {
 
 	l.logger.AddHook(debugHook.NewHook(hookLogger, nil))
 
-	if isTrue(os.Getenv("LOG_BLOB_ENABLED")) {
-		l.logger.AddHook(blobHook.NewHook(hookLogger, nil))
-	}
-
-	if isTrue(os.Getenv("LOG_BUGSNAG_ENABLED")) {
-		l.logger.AddHook(bugsnagHook.NewHook(hookLogger, nil))
-	}
+	// This has been there for ages, but makes no sense in long run,
+	// also adds too much dependencies into the go mod.
+	//
+	// if isTrue(os.Getenv("LOG_BLOB_ENABLED")) {
+	// 	l.logger.AddHook(blobHook.NewHook(hookLogger, nil))
+	// }
+	//
+	// if isTrue(os.Getenv("LOG_BUGSNAG_ENABLED")) {
+	// 	l.logger.AddHook(bugsnagHook.NewHook(hookLogger, nil))
+	// }
 }
 
 // Adds a field to the log entry, note that it doesn't log until you call
