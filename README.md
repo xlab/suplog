@@ -13,8 +13,8 @@ NewLogger(wr io.Writer, formatter Formatter, hooks ...Hook) Logger
 ```
 
 Available formatters:
-* `suplog.JSONFormatter` — suplogs all log entries as JSON objects
-* `suplog.TextFormatter` — suplogs log entries as text lines for TTY or without TTY colors.
+* `suplog.TextFormatter` — suplogs log entries as text lines for TTY or without TTY colors (`LOG_FORMATTER=text`)
+* `suplog.JSONFormatter` — suplogs all log entries as JSON objects (`LOG_FORMATTER=json`)
 
 Available hooks:
 * [github.com/xlab/suplog/hooks/debug](https://github.com/xlab/suplog/blob/master/hooks/debug/hook.go#L14)

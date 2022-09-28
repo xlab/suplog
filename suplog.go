@@ -15,10 +15,16 @@ import (
 	"github.com/xlab/suplog/stackcache"
 )
 
-// NewLogger constructs a new suplogger.
+// NewLogger constructs a new suplogger. The default formatter would be TextFormatter
+// if not overrident by and env variable.
 func NewLogger(wr io.Writer, formatter Formatter, hooks ...Hook) Logger {
 	if formatter == nil {
-		formatter = new(TextFormatter)
+		switch os.Getenv("LOG_FORMATTER") {
+		case "json":
+			formatter = new(JSONFormatter)
+		default:
+			formatter = new(TextFormatter)
+		}
 	}
 
 	log := &suplogger{
@@ -70,10 +76,18 @@ func (l *suplogger) initOnce() {
 			l.writer = os.Stderr
 		}
 
+		var formatter Formatter
+		switch os.Getenv("LOG_FORMATTER") {
+		case "json":
+			formatter = new(JSONFormatter)
+		default:
+			formatter = new(TextFormatter)
+		}
+
 		// otherwise init output with conservative defaults
 		l.logger = &logrus.Logger{
 			Out:       l.writer,
-			Formatter: new(TextFormatter),
+			Formatter: formatter,
 			Hooks:     make(LevelHooks),
 			Level:     DebugLevel,
 			ExitFunc:  closer.Exit,
